@@ -1,5 +1,6 @@
 <template>
-  <input
+<main v-if="!loading">
+   <input
     type="text"
     id="formInput"
     v-model="input"
@@ -10,7 +11,7 @@
   />
 
   <div class="error-msg">
-    <!-- <h1 class="error-msg">{{ this.errorMsg }}</h1> -->
+    <h1 class="error-msg">{{ this.errorMsg }}</h1>
   </div>
   <div class="weather-content" v-if="showData">
     <div class="search-info">
@@ -27,6 +28,10 @@
       {{ this.weather.weather[0].description }}
     </h1>
   </div>
+</main>
+  <main v-else>
+    <img :src="this.loadingGif" alt="">
+  </main>
   <!-- <button @click="getLocation">start</button> -->
 </template>
 <script>
@@ -37,16 +42,9 @@ export default {
     return {
       apiKey: "e7d61398e3b4124ab4f7bd68bffaf97c",
       baseUrl: "https://api.openweathermap.org/data/2.5/weather?",
-      weather: {
-        location : {
-          name : '',
-          region: ''
-        },
-        current: {
-          temperature: '',
-          weather_descriptions: ['']
-        }
-      },
+      loading: true,
+      loadingGif: require('../assets/loading.gif'),
+      weather: {},
       input: "",
       showData: false,
       weatherTerms: [
@@ -92,12 +90,12 @@ export default {
         `${this.baseUrl}lat=${position.coords.latitude}&lon=${position.coords.longitude}&units=metric&appid=${this.apiKey}`
       )
         .then((res) => res.json())
-        .then(this.setResults);
-        
+        .then(this.setResults)
+        .catch((error) => this.showErrorMsg("Please allow location to view current weather"));
     },
     fetchWeather(e) {
       if (e.keyCode == 13) {
-       
+       this.loading = true;
         fetch(`${this.baseUrl}&q=${this.input}&units=metric&appid=${this.apiKey}`)
           .then((res) => {
             // if (res.status == 200) {
@@ -106,16 +104,17 @@ export default {
             // }
           })
           .then(this.setResults)
-          .catch((error) => this.showErrorMsg);
+          .catch((error) => this.showErrorMsg("Search input is invalid."));
           
       }
     },
 
     setResults(result) {
       if (result) {
-        
         this.weather = result;
+        this.errorMsg = ''
         this.showData = true;
+        this.loading = false;
         // document.querySelector(".error-msg").innerHTML = "";
         this.input = "";
         this.setBg();
@@ -133,8 +132,10 @@ export default {
       });
     },
     showErrorMsg(err) {
+      console.log('yesyeseys');
       this.showData = false;
-      this.errorMsg = "Please Allow Location to Autodetect.";
+      this.loading = false;
+      this.errorMsg = err;
     },
   },
 };
